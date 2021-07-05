@@ -11,7 +11,6 @@ import reactor.kotlin.core.publisher.toFlux
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 /**
  * * /usage: All cards
@@ -34,10 +33,11 @@ class UsageRestController(private val cardRepository: CardRepository, private va
     @GetMapping("/_search")
     fun findCards(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) updatedSince: LocalDate?,
-        @RequestParam notPack: String?, @RequestParam investigator: String?
+        @RequestParam notPack: String?, @RequestParam investigator: String?, @RequestParam xpMin: Int?
     ): Flux<CardUsageDto> {
-        val after = updatedSince?.atTime(0, 0) ?: LocalDateTime.now().minusMonths(1)
-        return deckRepository.findByDateUpdateAfter(after)
+        val after = updatedSince?.atTime(0, 0)
+        val decksForGivenDate = if (after != null) deckRepository.findByDateUpdateAfter(after) else deckRepository.findAll()
+        return decksForGivenDate
             .filter { investigator == null || it.investigatorId == investigator }
             .collectList()
             .map { decks ->
@@ -48,6 +48,7 @@ class UsageRestController(private val cardRepository: CardRepository, private va
                     .map { (key, value) ->
                         cardRepository.findById(key)
                             .filter { card -> notPack == null || (card.pack.name != notPack) }
+                            .filter { card -> xpMin == null || card.build.xp >= xpMin }
                             .flatMap { card -> toCardUsageOverGivenDecks(card, value, decks) }
                     }.toFlux().flatMap { it }
             }.flatMapMany { it }
@@ -86,7 +87,10 @@ class UsageRestController(private val cardRepository: CardRepository, private va
     private fun countUsage(card: Card) = card.usages.map { it.usages }.fold(0) { a, b -> a + b }
 
     open class UsageDto(val name: String, val numUsed: Int, val weight: Int) : Comparable<UsageDto> {
-        val usedWeighted: BigDecimal = numUsed.toBigDecimal().divide(weight.toBigDecimal(), 5, RoundingMode.HALF_UP)
+        val usedWeighted: BigDecimal = if (weight > 0)
+            numUsed.toBigDecimal().divide(weight.toBigDecimal(), 5, RoundingMode.HALF_UP)
+        else
+            BigDecimal.ZERO
 
         override fun compareTo(other: UsageDto): Int {
             return other.usedWeighted.compareTo(usedWeighted)
