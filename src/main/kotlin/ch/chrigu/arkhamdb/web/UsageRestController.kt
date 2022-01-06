@@ -81,7 +81,19 @@ class UsageRestController(private val cardRepository: CardRepository, private va
     }.map { toCardUsage(card, numUsed, it) }
 
     private fun toCardUsage(card: Card, numUsed: Int, weight: Int) =
-        CardUsageDto(card.code, card.name.de, card.build.xp, card.factions.map { it.name }, numUsed, weight, card.pack.name, card.type.name, card.subtype?.name, card.bonded.to)
+        CardUsageDto(
+            card.code,
+            card.name.de,
+            card.subName,
+            card.build.xp,
+            card.factions.map { it.name },
+            numUsed,
+            weight,
+            card.pack.name,
+            card.type.name,
+            card.subtype?.name,
+            card.bonded.to
+        )
 
 
     private fun countUsage(card: Card) = card.usages.map { it.usages }.fold(0) { a, b -> a + b }
