@@ -19,7 +19,7 @@ data class CardDto(
     val subname: String?,
     val cost: Int,
     val text: String?,
-    val real_text: String,
+    val real_text: String?,
     val quantity: Int,
     val skill_intellect: Int?, val skill_combat: Int?, val skill_willpower: Int?, val skill_agility: Int?,
     val xp: Int,
@@ -50,7 +50,7 @@ data class CardDto(
     val bonded_count: Int?
 ) {
     fun toDomain(usages: List<CardUsage>) = Card(
-        code, CardText(name, real_name), subname, position, CardText(text ?: real_text, real_text), double_sided, back_text, back_flavor,
+        code, CardText(name, real_name), subname, position, CardText(text ?: real_text ?: "", real_text ?: ""), double_sided, back_text, back_flavor,
         quantity,
         listOfNotNull(CardAttribute(faction_name, faction_code), faction2_code?.let { CardAttribute(faction2_name!!, faction2_code) }),
         CardAttribute(type_name, type_code),
