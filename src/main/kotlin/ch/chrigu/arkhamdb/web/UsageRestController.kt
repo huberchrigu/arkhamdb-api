@@ -76,8 +76,11 @@ class UsageRestController(private val cardRepository: CardRepository, private va
     private fun toCardUsageOverAllDecks(card: Card, numUsed: Int) = packRepository.findById(card.pack.code)
         .map { toCardUsage(card, numUsed, it.decksSincePack) }
 
+    /**
+     * Computes the weight by counting all [decks] since the [card]'s [pack][Card.pack] is available.
+     */
     private fun toCardUsageOverGivenDecks(card: Card, numUsed: Int, decks: List<Deck>) = packRepository.findById(card.pack.code).map { pack ->
-        decks.filter { it.dateUpdate.isAfter(pack.available.atStartOfDay()) }.count()
+        decks.count { it.dateUpdate.isAfter(pack.available.atStartOfDay()) }
     }.map { toCardUsage(card, numUsed, it) }
 
     private fun toCardUsage(card: Card, numUsed: Int, weight: Int) =
